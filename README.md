@@ -69,15 +69,18 @@ npm run build
 
 ## Cloudflare setup
 
-Create the D1 database, replace the placeholder `database_id` in `wrangler.jsonc`, apply the migration, then deploy:
+From a terminal where Wrangler is already authenticated, create the D1 database, copy its returned UUID into `wrangler.jsonc`, apply the migration, then deploy:
 
 ```bash
-npx wrangler d1 create riskgate-db
-npx wrangler d1 migrations apply riskgate-db --remote
+npm run cf:whoami
+npm run cf:d1:create
+npm run db:migrate:remote
 npm run deploy
 ```
 
-The first migration is in `migrations/0001_initial.sql`. The app treats receipt persistence as best-effort so local development remains usable without D1.
+The first migration is in `migrations/0001_initial.sql`. `weur` is used as the location hint for lower latency from West Africa. If `riskgate-db` already exists, run `npx wrangler d1 list`, copy its UUID instead of creating a duplicate, and continue with the migration.
+
+After deployment, test both scenarios and confirm the decision receipt says `Saved to D1`. `npm run cf:tail` streams production errors while you test. The app treats receipt persistence as best-effort so local development remains usable without D1.
 
 ## Safety boundaries
 
