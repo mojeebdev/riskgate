@@ -31,6 +31,19 @@ function deterministicCompile(instruction: string): RiskPolicy {
   return policySchema.parse(next);
 }
 
+export function parsePolicyResponse(content: string): RiskPolicy {
+  const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1];
+  const candidate = fenced ?? content;
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+
+  if (start === -1 || end <= start) {
+    throw new Error("The configured policy model returned no JSON object.");
+  }
+
+  return policySchema.parse(JSON.parse(candidate.slice(start, end + 1)));
+}
+
 export async function compilePolicy(instruction: string) {
   const apiKey = process.env.AI_API_KEY;
   const baseUrl = process.env.AI_BASE_URL;
@@ -49,7 +62,8 @@ export async function compilePolicy(instruction: string) {
     body: JSON.stringify({
       model,
       temperature: 0,
-      response_format: { type: "json_object" },
+      max_tokens: 900,
+      stream: false,
       messages: [
         {
           role: "system",
@@ -67,5 +81,5 @@ export async function compilePolicy(instruction: string) {
   };
   const content = body.choices?.[0]?.message?.content;
   if (!content) throw new Error("The configured policy model returned no policy.");
-  return { policy: policySchema.parse(JSON.parse(content)), source: "ai" as const };
+  return { policy: parsePolicyResponse(content), source: "ai" as const };
 }
