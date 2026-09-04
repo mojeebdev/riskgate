@@ -9,8 +9,15 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:whoami": "wrangler whoami",
+    "cf:d1:create": "wrangler d1 create riskgate-db --location weur",
+    "db:migrate:local": "wrangler d1 migrations apply riskgate-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply riskgate-db --remote",
+    "cf:tail": "wrangler tail riskgate",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
