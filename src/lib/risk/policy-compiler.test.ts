@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compilePolicy } from "./policy-compiler";
+import { compilePolicy, parsePolicyResponse } from "./policy-compiler";
 
 describe("compilePolicy", () => {
   it("compiles clear limits without requiring an AI provider", async () => {
@@ -13,5 +13,21 @@ describe("compilePolicy", () => {
     expect(policy.maxPortfolioExposurePct).toBe(20);
     expect(policy.maxSlippageBps).toBe(25);
     expect(policy.maxLeverage).toBe(1);
+  });
+
+  it("accepts JSON wrapped in a model markdown fence", () => {
+    const policy = parsePolicyResponse(`Here is the policy:\n\`\`\`json
+      {
+        "allowedAssets": ["BTC"],
+        "maxOrderUsd": 2000,
+        "maxPortfolioExposurePct": 15,
+        "maxSlippageBps": 20,
+        "maxLeverage": 1,
+        "approvalThresholdUsd": 1000
+      }
+    \`\`\``);
+
+    expect(policy.allowedAssets).toEqual(["BTC"]);
+    expect(policy.maxOrderUsd).toBe(2_000);
   });
 });
