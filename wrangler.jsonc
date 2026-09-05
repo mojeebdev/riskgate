@@ -16,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "riskgate-db",
-      "database_id": "replace-after-wrangler-d1-create",
+      "database_id": "e9f4ca36-9e06-4b10-b778-d23b308e545d",
       "migrations_dir": "migrations"
     }
   ],
