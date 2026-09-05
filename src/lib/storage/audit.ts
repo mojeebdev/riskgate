@@ -1,13 +1,5 @@
 import type { Evaluation, MarketSnapshot, OrderIntent, RiskPolicy } from "@/lib/risk/types";
-
-type D1Statement = {
-  bind: (...values: unknown[]) => D1Statement;
-  run: () => Promise<unknown>;
-};
-
-type D1DatabaseLike = {
-  prepare: (query: string) => D1Statement;
-};
+import { getRuntimeBindings } from "@/lib/storage/d1";
 
 export async function recordEvaluation(input: {
   policy: RiskPolicy;
@@ -16,9 +8,7 @@ export async function recordEvaluation(input: {
   evaluation: Evaluation;
 }) {
   try {
-    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
-    const { env } = await getCloudflareContext({ async: true });
-    const db = (env as unknown as { DB?: D1DatabaseLike }).DB;
+    const db = (await getRuntimeBindings()).DB;
     if (!db) return false;
 
     await db

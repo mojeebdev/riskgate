@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   Evaluation,
   MarketSnapshot,
@@ -40,6 +40,8 @@ type ApiResult = {
   connectionNote: string | null;
 };
 
+type ConnectionStatus = "checking" | "connected" | "disconnected" | "expired" | "not_configured" | "unavailable";
+
 function DecisionIcon({ decision }: { decision: Evaluation["decision"] }) {
   return <span className={`decision-icon ${decision}`}>{decision === "allow" ? "✓" : decision === "approval_required" ? "!" : "×"}</span>;
 }
@@ -52,7 +54,23 @@ export function RiskGateDemo() {
   const [result, setResult] = useState<ApiResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("checking");
   const quantity = useMemo(() => intent.notionalUsd / 110_240, [intent.notionalUsd]);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/binance/status")
+      .then((response) => response.json())
+      .then((data: { status?: ConnectionStatus }) => {
+        if (active && data.status) setConnectionStatus(data.status);
+      })
+      .catch(() => {
+        if (active) setConnectionStatus("unavailable");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function compile() {
     setCompileState("loading");
@@ -110,7 +128,7 @@ export function RiskGateDemo() {
       <div className="demo-topbar">
         <div className="traffic-lights"><span /><span /><span /></div>
         <span>RiskGate / policy-console</span>
-        <span className="mcp-state"><i /> MCP ready</span>
+        <span className="mcp-state"><i /> {connectionStatus === "connected" ? "Live MCP connected" : connectionStatus === "checking" ? "Checking MCP…" : "MCP demo fallback"}</span>
       </div>
 
       <div className="policy-builder">

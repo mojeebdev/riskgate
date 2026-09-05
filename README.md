@@ -82,6 +82,19 @@ The first migration is in `migrations/0001_initial.sql`. `weur` is used as the l
 
 After deployment, test both scenarios and confirm the decision receipt says `Saved to D1`. `npm run cf:tail` streams production errors while you test. The app treats receipt persistence as best-effort so local development remains usable without D1.
 
+### Optional live Binance Agent OS evidence
+
+RiskGate starts with explicit **Demo evidence**. To connect live, read-only Agent OS evidence, set two production secrets in Cloudflare: `BINANCE_OAUTH_ENCRYPTION_KEY` (a random 32-byte base64url key) and `BINANCE_CONNECT_ADMIN_TOKEN` (a long random owner-only value). Neither belongs in `wrangler.jsonc`, Git, or a browser URL.
+
+With the same admin value in a local environment variable, start the connection from your own terminal:
+
+```bash
+$env:RISKGATE_ADMIN_TOKEN = "your-owner-only-value"
+npm run binance:connect
+```
+
+Open the printed one-time URL, complete Binance OAuth, then return to RiskGate. The encrypted access token is stored in D1 and used only for market-data MCP calls. No trade, order-placement, cancel, balance, or execution tool is called. If the token is missing, expired, or Agent OS fails, the product remains in its clearly labelled demo fallback.
+
 ## Safety boundaries
 
 - Read-only market data is the default Agent OS capability used by the demo.

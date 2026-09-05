@@ -4,6 +4,7 @@ import {
   getAgentOsMarketSnapshot,
   getDemoMarketSnapshot,
 } from "@/lib/binance/agent-os";
+import { getBinanceConnection } from "@/lib/binance/oauth";
 import { evaluateRisk } from "@/lib/risk/policy-engine";
 import { orderIntentSchema, policySchema } from "@/lib/risk/types";
 import { recordEvaluation } from "@/lib/storage/audit";
@@ -22,8 +23,18 @@ export async function POST(request: Request) {
     let connectionNote: string | null = null;
 
     try {
+      const connection = await getBinanceConnection();
+      if (connection.status !== "connected") {
+        const message = {
+          disconnected: "Binance Agent OS is not connected.",
+          expired: "Binance Agent OS access has expired; the owner must reconnect.",
+          not_configured: "Binance Agent OS is not configured.",
+          unavailable: "Binance Agent OS connection status is unavailable.",
+        }[connection.status];
+        throw new Error(message);
+      }
       market = await Promise.race([
-        getAgentOsMarketSnapshot(intent.symbol),
+        getAgentOsMarketSnapshot(intent.symbol, connection.accessToken),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error("Agent OS timeout")), 5_000),
         ),

@@ -16,6 +16,7 @@ type McpTool = {
 
 function toolScore(tool: McpTool) {
   const text = `${tool.name} ${tool.description ?? ""}`.toLowerCase();
+  if (/\b(place|execute|cancel|trade|order\s+submit)\b/.test(text) && !/order.?book|depth/.test(text)) return -1;
   if (/order.?book|depth/.test(text)) return 4;
   if (/ticker|price|quote/.test(text)) return 2;
   return 0;
@@ -124,9 +125,12 @@ function snapshotFromPayload(payload: unknown, symbol: string): MarketSnapshot {
 
 export async function getAgentOsMarketSnapshot(
   symbol: string,
+  accessToken: string,
 ): Promise<MarketSnapshot> {
   const client = new Client({ name: "riskgate", version: "0.1.0" });
-  const transport = new StreamableHTTPClientTransport(new URL(ENDPOINT));
+  const transport = new StreamableHTTPClientTransport(new URL(ENDPOINT), {
+    requestInit: { headers: { authorization: `Bearer ${accessToken}` } },
+  });
 
   try {
     await client.connect(transport);
